@@ -3,8 +3,8 @@ const gradeData = {
     "No Grade": {
         refine: "+11",
         materialOptions: [
-            { name: "Etel Aquamarine 1ea", zeny: 100000, successRateBase: 70 },
-            { name: "Etel Aquamarine 5ea", zeny: 500000, successRateBase: 70 }
+            { name: "Etel Aquamarine 1ea", zeny: 100000, successRateBase: 70, keepsItemOnFail: false },
+            { name: "Etel Aquamarine 5ea", zeny: 500000, successRateBase: 70, keepsItemOnFail: true }
         ],
         blessedEtelDustCostPerPercent: 1,
         maxBonusPercent: 10,
@@ -14,8 +14,8 @@ const gradeData = {
     "Grade D": {
         refine: "+11",
         materialOptions: [
-            { name: "Etel Topaz 1ea", zeny: 125000, successRateBase: 60 },
-            { name: "Etel Topaz 5ea", zeny: 625000, successRateBase: 60 }
+            { name: "Etel Topaz 1ea", zeny: 125000, successRateBase: 60, keepsItemOnFail: false },
+            { name: "Etel Topaz 5ea", zeny: 625000, successRateBase: 60, keepsItemOnFail: true }
         ],
         blessedEtelDustCostPerPercent: 3,
         maxBonusPercent: 10,
@@ -25,8 +25,8 @@ const gradeData = {
     "Grade C": {
         refine: "+11",
         materialOptions: [
-            { name: "Etel Amethyst 1ea", zeny: 200000, successRateBase: 50 },
-            { name: "Etel Amethyst 5ea", zeny: 1000000, successRateBase: 50 }
+            { name: "Etel Amethyst 1ea", zeny: 200000, successRateBase: 50, keepsItemOnFail: false },
+            { name: "Etel Amethyst 5ea", zeny: 1000000, successRateBase: 50, keepsItemOnFail: true }
         ],
         blessedEtelDustCostPerPercent: 5,
         maxBonusPercent: 10,
@@ -36,8 +36,8 @@ const gradeData = {
     "Grade B": {
         refine: "+11",
         materialOptions: [
-            { name: "Etel Amber 2ea", zeny: 500000, successRateBase: 40 },
-            { name: "Etel Amber 10ea", zeny: 2500000, successRateBase: 40 }
+            { name: "Etel Amber 2ea", zeny: 500000, successRateBase: 40, keepsItemOnFail: false },
+            { name: "Etel Amber 10ea", zeny: 2500000, successRateBase: 40, keepsItemOnFail: true }
         ],
         blessedEtelDustCostPerPercent: 7,
         maxBonusPercent: 10,
@@ -78,8 +78,8 @@ let totalMaterials = new Map();
 
 // ฟังก์ชันสำหรับอัปเดต UI ยอดรวม
 function updateTotalSpentUI() {
-    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "";
-    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "";
+    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "Z";
+    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "ea";
 
     totalMaterialsSpentList.innerHTML = ''; // Clear previous list
     if (totalMaterials.size === 0) {
@@ -160,6 +160,7 @@ function displayGradeInfo() {
             radioInput.dataset.zeny = material.zeny;
             radioInput.dataset.successRateBase = material.successRateBase;
             radioInput.dataset.materialName = material.name;
+            radioInput.dataset.keepsItemOnFail = material.keepsItemOnFail; // เพิ่มข้อมูลนี้
 
             if (index === 0) {
                 radioInput.checked = true;
@@ -270,15 +271,20 @@ function simulateGrade() {
     const currentZenyCost = parseInt(selectedMaterialRadio.dataset.zeny);
     const currentMaterialName = selectedMaterialRadio.dataset.materialName;
     const currentBlessedEtelDustUsed = dustUsed;
+    const keepsItemOnFail = selectedMaterialRadio.dataset.keepsItemOnFail === 'true'; // ดึงค่าที่เพิ่มเข้ามา
 
     totalZeny += currentZenyCost;
     totalBlessedEtelDust += currentBlessedEtelDustUsed;
 
     // อัปเดต Map ของวัตถุดิบ
+    // แยกจำนวนวัตถุดิบออกจากชื่อ (เช่น "Etel Aquamarine 1ea" -> 1)
+    const materialQuantityMatch = currentMaterialName.match(/(\d+)ea$/);
+    const materialQuantityUsedInTransaction = materialQuantityMatch ? parseInt(materialQuantityMatch[1]) : 1; // Default to 1 if not found
+
     if (totalMaterials.has(currentMaterialName)) {
-        totalMaterials.set(currentMaterialName, totalMaterials.get(currentMaterialName) + 1); // สมมติว่าแต่ละการ Grade ใช้วัตถุดิบ 1ea (ของชนิดที่เลือก)
+        totalMaterials.set(currentMaterialName, totalMaterials.get(currentMaterialName) + materialQuantityUsedInTransaction);
     } else {
-        totalMaterials.set(currentMaterialName, 1);
+        totalMaterials.set(currentMaterialName, materialQuantityUsedInTransaction);
     }
     // *******************************************************************
 
@@ -293,10 +299,17 @@ function simulateGrade() {
         displayGradeInfo();
     } else {
         resultDiv.className = "result failure";
-        resultDiv.textContent = "Grade ล้มเหลว! ไอเท็มของคุณแตกสลาย";
-
         failSound.currentTime = 0;
         failSound.play();
+
+        if (keepsItemOnFail) {
+            resultDiv.textContent = "Grade ล้มเหลว! ไอเท็มของคุณยังคงอยู่";
+            // ไอเท็มยังอยู่ Grade ไม่เปลี่ยน
+        } else {
+            resultDiv.textContent = "Grade ล้มเหลว! ไอเท็มของคุณแตกสลาย";
+            currentGradeSelect.value = "No Grade"; // ไอเท็มแตก กลับไป No Grade
+            displayGradeInfo();
+        }
     }
     
     // อัปเดต UI สรุปยอดรวมทุกครั้งที่ Grade

@@ -1,4 +1,4 @@
-// ข้อมูลการ Grade (เหมือนเดิม)
+// ข้อมูลการ Grade พร้อมเพิ่มข้อมูลการคราฟต์สำหรับวัตถุดิบหลัก
 const gradeData = {
     "No Grade": {
         refine: "+11",
@@ -54,6 +54,53 @@ const gradeData = {
     }
 };
 
+// ข้อมูลการคราฟต์วัตถุดิบย่อย
+// Key: ชื่อวัตถุดิบที่ต้องการคราฟต์
+// Value: Object ที่มี zeny และ materials [ { name: "ชื่อวัตถุดิบ", quantity: จำนวน }, ... ]
+const craftingRecipes = {
+    "Etel Stone": {
+        zeny: 100000,
+        materials: [
+            { name: "Etel Dust", quantity: 5 }
+        ]
+    },
+    "Blessed Etel Dust": {
+        zeny: 100000,
+        materials: [
+            { name: "Etel Dust", quantity: 5 },
+            { name: "Blacksmith Blessing", quantity: 1 } // เพิ่ม Blacksmith Blessing เข้าไปตรงนี้
+        ]
+    },
+    "Etel Aquamarine": {
+        zeny: 100000,
+        materials: [
+            { name: "Etel Stone", quantity: 3 },
+            { name: "Aquamarine", quantity: 1 }
+        ]
+    },
+    "Etel Topaz": {
+        zeny: 200000,
+        materials: [
+            { name: "Etel Stone", quantity: 6 },
+            { name: "Topaz", quantity: 1 }
+        ]
+    },
+    "Etel Amethyst": {
+        zeny: 300000,
+        materials: [
+            { name: "Etel Stone", quantity: 10 },
+            { name: "Amethyst", quantity: 1 }
+        ]
+    },
+    "Etel Amber": {
+        zeny: 500000,
+        materials: [
+            { name: "Etel Stone", quantity: 15 },
+            { name: "Amber", quantity: 1 }
+        ]
+    }
+};
+
 // อ้างอิงถึง Element ต่างๆ ใน HTML
 const currentGradeSelect = document.getElementById("currentGrade");
 const materialOptionsDiv = document.getElementById("materialOptions");
@@ -73,21 +120,22 @@ const failSound = document.getElementById("failSound");
 // ตัวแปรสำหรับเก็บยอดรวม
 let totalZeny = 0;
 let totalBlessedEtelDust = 0;
-// ใช้ Map เพื่อเก็บวัตถุดิบแต่ละชนิดและจำนวนที่ใช้ไป
-let totalMaterials = new Map();
+let totalMaterials = new Map(); // เก็บรวมทั้งวัตถุดิบหลักและย่อย
 
 // ฟังก์ชันสำหรับอัปเดต UI ยอดรวม
 function updateTotalSpentUI() {
-    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "Z";
-    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "ea";
+    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "";
+    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "";
 
     totalMaterialsSpentList.innerHTML = ''; // Clear previous list
     if (totalMaterials.size === 0) {
         totalMaterialsSpentList.innerHTML = '<li>ยังไม่มีวัตถุดิบที่ใช้ไป</li>';
     } else {
-        for (let [materialName, quantity] of totalMaterials) {
+        const sortedMaterials = Array.from(totalMaterials.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+        
+        for (let [materialName, quantity] of sortedMaterials) {
             const listItem = document.createElement("li");
-            listItem.textContent = `${materialName}: ${quantity}ea`;
+            listItem.textContent = `${materialName}: ${quantity.toLocaleString()}ea`;
             totalMaterialsSpentList.appendChild(listItem);
         }
     }
@@ -100,7 +148,6 @@ function resetSpentData() {
     totalMaterials.clear(); // ล้าง Map วัตถุดิบ
     updateTotalSpentUI();
     resultDiv.textContent = ""; // เคลียร์ผลลัพธ์การ Grade
-    // อาจจะรีเซ็ต Grade ไปที่ "No Grade" ด้วย
     currentGradeSelect.value = "No Grade";
     displayGradeInfo();
 }
@@ -117,12 +164,10 @@ function displayGradeInfo() {
     if (!blessedDustP) {
         blessedDustP = document.createElement("p");
         blessedDustP.id = "blessedDustP";
-        // แทรกก่อน label ของ blessedEtelDust (ตำแหน่งใหม่ที่เหมาะสมกว่า)
         const blessedEtelDustLabel = document.querySelector('label[for="blessedEtelDust"]');
         if (blessedEtelDustLabel) {
             blessedEtelDustLabel.parentNode.insertBefore(blessedDustP, blessedEtelDustLabel);
         } else {
-            // Fallback ถ้าหา label ไม่เจอ
             blessedEtelDustInput.parentNode.insertBefore(blessedDustP, blessedEtelDustInput);
         }
     }
@@ -160,7 +205,7 @@ function displayGradeInfo() {
             radioInput.dataset.zeny = material.zeny;
             radioInput.dataset.successRateBase = material.successRateBase;
             radioInput.dataset.materialName = material.name;
-            radioInput.dataset.keepsItemOnFail = material.keepsItemOnFail; // เพิ่มข้อมูลนี้
+            radioInput.dataset.keepsItemOnFail = material.keepsItemOnFail; 
 
             if (index === 0) {
                 radioInput.checked = true;
@@ -178,7 +223,7 @@ function displayGradeInfo() {
         });
 
         blessedEtelDustInput.min = "0";
-        blessedEtelDustInput.max = info.maxBlessedEtelDustPieces; // ใช้ค่า max ที่ถูกต้องตาม Grade
+        blessedEtelDustInput.max = info.maxBlessedEtelDustPieces;
         blessedEtelDustInput.value = 0;
 
         updateZenyAndSuccessRate();
@@ -235,6 +280,27 @@ function updateSuccessRate() {
     }
 }
 
+// ฟังก์ชันช่วยในการเพิ่มวัตถุดิบเข้าสู่ Map (รวมวัตถุดิบย่อยทั้งหมด)
+function addMaterialToTotalRecursive(materialName, quantity) {
+    const recipe = craftingRecipes[materialName];
+    if (recipe) {
+        // เพิ่ม Zeny สำหรับการคราฟต์วัตถุดิบนี้
+        totalZeny += recipe.zeny * quantity;
+
+        // วนลูปเพิ่มวัตถุดิบย่อยของสูตร
+        for (const subMat of recipe.materials) {
+            addMaterialToTotalRecursive(subMat.name, subMat.quantity * quantity); // เรียกตัวเองซ้ำสำหรับวัตถุดิบย่อย
+        }
+    } else {
+        // ถ้าวัตถุดิบนี้ไม่มีสูตรการคราฟต์ (เป็นวัตถุดิบพื้นฐาน) ให้เพิ่มลงใน totalMaterials
+        if (totalMaterials.has(materialName)) {
+            totalMaterials.set(materialName, totalMaterials.get(materialName) + quantity);
+        } else {
+            totalMaterials.set(materialName, quantity);
+        }
+    }
+}
+
 // ฟังก์ชันจำลองการ Grade
 function simulateGrade() {
     const selectedGrade = currentGradeSelect.value;
@@ -266,25 +332,30 @@ function simulateGrade() {
 
     const randomNumber = Math.floor(Math.random() * 100);
 
-    // ************* ส่วนที่เพิ่มเข้ามาสำหรับการบันทึกยอดรวม *************
-    // ดึงค่า Zeny และชื่อวัตถุดิบที่ใช้ในครั้งนี้
+    // ************* ส่วนสำหรับการบันทึกยอดรวมวัตถุดิบทั้งหมด *************
     const currentZenyCost = parseInt(selectedMaterialRadio.dataset.zeny);
-    const currentMaterialName = selectedMaterialRadio.dataset.materialName;
+    const currentMaterialNameForGrade = selectedMaterialRadio.dataset.materialName; // e.g., "Etel Aquamarine 1ea"
     const currentBlessedEtelDustUsed = dustUsed;
-    const keepsItemOnFail = selectedMaterialRadio.dataset.keepsItemOnFail === 'true'; // ดึงค่าที่เพิ่มเข้ามา
+    const keepsItemOnFail = selectedMaterialRadio.dataset.keepsItemOnFail === 'true';
 
-    totalZeny += currentZenyCost;
-    totalBlessedEtelDust += currentBlessedEtelDustUsed;
+    totalZeny += currentZenyCost; // Zeny โดยตรงจากการ Grade
 
-    // อัปเดต Map ของวัตถุดิบ
-    // แยกจำนวนวัตถุดิบออกจากชื่อ (เช่น "Etel Aquamarine 1ea" -> 1)
-    const materialQuantityMatch = currentMaterialName.match(/(\d+)ea$/);
-    const materialQuantityUsedInTransaction = materialQuantityMatch ? parseInt(materialQuantityMatch[1]) : 1; // Default to 1 if not found
+    // แยกชื่อวัตถุดิบหลักออก (เช่น "Etel Aquamarine 1ea" -> "Etel Aquamarine")
+    const primaryMaterialMatch = currentMaterialNameForGrade.match(/(\w+\s\w+)/);
+    const primaryMaterialName = primaryMaterialMatch ? primaryMaterialMatch[1] : currentMaterialNameForGrade.replace(/\s\d+ea$/, '');
+    
+    // ดึงจำนวนของวัตถุดิบหลักที่ใช้ในการ Grade (เช่น 1ea หรือ 5ea)
+    const gradeMaterialQuantityMatch = currentMaterialNameForGrade.match(/(\d+)ea$/);
+    const gradeMaterialQuantityUsed = gradeMaterialQuantityMatch ? parseInt(gradeMaterialQuantityMatch[1]) : 1;
 
-    if (totalMaterials.has(currentMaterialName)) {
-        totalMaterials.set(currentMaterialName, totalMaterials.get(currentMaterialName) + materialQuantityUsedInTransaction);
-    } else {
-        totalMaterials.set(currentMaterialName, materialQuantityUsedInTransaction);
+    // เริ่มคำนวณวัตถุดิบย่อยทั้งหมดที่ใช้ในการสร้างวัตถุดิบหลักที่ใช้ Grade
+    addMaterialToTotalRecursive(primaryMaterialName, gradeMaterialQuantityUsed);
+
+
+    // เพิ่ม Blessed Etel Dust และวัตถุดิบย่อยของมัน
+    if (currentBlessedEtelDustUsed > 0) {
+        totalBlessedEtelDust += currentBlessedEtelDustUsed; // นับ Blessed Etel Dust ตรงๆ ที่ใช้
+        addMaterialToTotalRecursive("Blessed Etel Dust", currentBlessedEtelDustUsed);
     }
     // *******************************************************************
 
@@ -304,15 +375,13 @@ function simulateGrade() {
 
         if (keepsItemOnFail) {
             resultDiv.textContent = "Grade ล้มเหลว! ไอเท็มของคุณยังคงอยู่";
-            // ไอเท็มยังอยู่ Grade ไม่เปลี่ยน
         } else {
             resultDiv.textContent = "Grade ล้มเหลว! ไอเท็มของคุณแตกสลาย";
-            currentGradeSelect.value = "No Grade"; // ไอเท็มแตก กลับไป No Grade
+            currentGradeSelect.value = "No Grade";
             displayGradeInfo();
         }
     }
     
-    // อัปเดต UI สรุปยอดรวมทุกครั้งที่ Grade
     updateTotalSpentUI();
 }
 
@@ -323,4 +392,4 @@ blessedEtelDustInput.addEventListener("input", updateSuccessRate);
 
 // เรียกใช้ครั้งแรกเมื่อโหลดหน้าเว็บและอัปเดต UI ยอดรวมเริ่มต้น
 displayGradeInfo();
-updateTotalSpentUI(); // เรียกใช้ครั้งแรกเพื่อแสดง 0
+updateTotalSpentUI();

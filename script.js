@@ -55,8 +55,6 @@ const gradeData = {
 };
 
 // ข้อมูลการคราฟต์วัตถุดิบย่อย
-// Key: ชื่อวัตถุดิบที่ต้องการคราฟต์
-// Value: Object ที่มี zeny และ materials [ { name: "ชื่อวัตถุดิบ", quantity: จำนวน }, ... ]
 const craftingRecipes = {
     "Etel Stone": {
         zeny: 100000,
@@ -68,7 +66,7 @@ const craftingRecipes = {
         zeny: 100000,
         materials: [
             { name: "Etel Dust", quantity: 5 },
-            { name: "Blacksmith Blessing", quantity: 1 } // เพิ่ม Blacksmith Blessing เข้าไปตรงนี้
+            { name: "Blacksmith Blessing", quantity: 1 } 
         ]
     },
     "Etel Aquamarine": {
@@ -112,6 +110,7 @@ const resultDiv = document.getElementById("result");
 const totalZenySpentSpan = document.getElementById("totalZenySpent");
 const totalBlessedEtelDustSpentSpan = document.getElementById("totalBlessedEtelDustSpent");
 const totalMaterialsSpentList = document.getElementById("totalMaterialsSpent");
+const eventRateCheckbox = document.getElementById("eventRateCheckbox"); // อ้างอิง Checkbox ใหม่
 
 // อ้างอิงถึง Element เสียง
 const successSound = document.getElementById("successSound");
@@ -120,12 +119,12 @@ const failSound = document.getElementById("failSound");
 // ตัวแปรสำหรับเก็บยอดรวม
 let totalZeny = 0;
 let totalBlessedEtelDust = 0;
-let totalMaterials = new Map(); // เก็บรวมทั้งวัตถุดิบหลักและย่อย
+let totalMaterials = new Map();
 
 // ฟังก์ชันสำหรับอัปเดต UI ยอดรวม
 function updateTotalSpentUI() {
-    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "";
-    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "";
+    totalZenySpentSpan.textContent = totalZeny.toLocaleString() + "Z";
+    totalBlessedEtelDustSpentSpan.textContent = totalBlessedEtelDust.toLocaleString() + "ea";
 
     totalMaterialsSpentList.innerHTML = ''; // Clear previous list
     if (totalMaterials.size === 0) {
@@ -149,6 +148,7 @@ function resetSpentData() {
     updateTotalSpentUI();
     resultDiv.textContent = ""; // เคลียร์ผลลัพธ์การ Grade
     currentGradeSelect.value = "No Grade";
+    eventRateCheckbox.checked = false; // รีเซ็ต Checkbox ด้วย
     displayGradeInfo();
 }
 
@@ -184,13 +184,15 @@ function displayGradeInfo() {
             blessedEtelDustInput.value = "0";
             blessedEtelDustInput.disabled = true;
             document.querySelector('button').disabled = true;
-            resultDiv.textContent = "";
             blessedDustP.style.display = 'none';
+            eventRateCheckbox.disabled = true; // ปิดการใช้งาน Checkbox
+            eventRateCheckbox.checked = false; // ตรวจสอบให้แน่ใจว่าไม่ได้เลือก
             return;
         } else {
             blessedEtelDustInput.disabled = false;
             document.querySelector('button').disabled = false;
             blessedDustP.style.display = 'block';
+            eventRateCheckbox.disabled = false; // เปิดการใช้งาน Checkbox
         }
 
         info.materialOptions.forEach((material, index) => {
@@ -237,6 +239,8 @@ function displayGradeInfo() {
         document.querySelector('button').disabled = true;
         let blessedDustP = document.getElementById("blessedDustP");
         if (blessedDustP) blessedDustP.style.display = 'none';
+        eventRateCheckbox.disabled = true; // ปิดการใช้งาน Checkbox
+        eventRateCheckbox.checked = false; // ตรวจสอบให้แน่ใจว่าไม่ได้เลือก
     }
 }
 
@@ -253,7 +257,7 @@ function updateZenyAndSuccessRate() {
     }
 }
 
-// ฟังก์ชันสำหรับอัปเดตโอกาสสำเร็จเมื่อมีการเปลี่ยนแปลง Blessed Etel Dust
+// ฟังก์ชันสำหรับอัปเดตโอกาสสำเร็จเมื่อมีการเปลี่ยนแปลง Blessed Etel Dust หรือ Checkbox Event Rate
 function updateSuccessRate() {
     const selectedMaterialRadio = document.querySelector('input[name="materialChoice"]:checked');
     if (!selectedMaterialRadio) {
@@ -271,12 +275,17 @@ function updateSuccessRate() {
         let bonusFromDust = Math.floor(dustUsed / info.blessedEtelDustCostPerPercent);
         let actualBonusSuccessRate = Math.min(bonusFromDust, info.maxBonusPercent);
         
-        let actualSuccessRate = baseSuccessRate + actualBonusSuccessRate;
-        
-        if (actualSuccessRate > 100) {
-            actualSuccessRate = 100;
+        let currentSuccessRate = baseSuccessRate + actualBonusSuccessRate;
+
+        // เพิ่มโบนัสจาก Event Rate ถ้า Checkbox ถูกเลือก
+        if (eventRateCheckbox.checked) {
+            currentSuccessRate += 10;
         }
-        successRateSpan.textContent = actualSuccessRate;
+        
+        if (currentSuccessRate > 100) {
+            currentSuccessRate = 100;
+        }
+        successRateSpan.textContent = currentSuccessRate;
     }
 }
 
@@ -284,8 +293,10 @@ function updateSuccessRate() {
 function addMaterialToTotalRecursive(materialName, quantity) {
     const recipe = craftingRecipes[materialName];
     if (recipe) {
-        // เพิ่ม Zeny สำหรับการคราฟต์วัตถุดิบนี้
-        totalZeny += recipe.zeny * quantity;
+        // เพิ่ม Zeny สำหรับการคราฟต์วัตถุดิบนี้ (ถ้ามี)
+        if (recipe.zeny) { // ตรวจสอบว่ามี Zeny ใน recipe หรือไม่
+            totalZeny += recipe.zeny * quantity;
+        }
 
         // วนลูปเพิ่มวัตถุดิบย่อยของสูตร
         for (const subMat of recipe.materials) {
@@ -326,6 +337,11 @@ function simulateGrade() {
     
     let actualSuccessRate = baseSuccessRate + actualBonusSuccessRate;
 
+    // เพิ่มโบนัสจาก Event Rate ในการจำลอง Grade ด้วย
+    if (eventRateCheckbox.checked) {
+        actualSuccessRate += 10;
+    }
+
     if (actualSuccessRate > 100) {
         actualSuccessRate = 100;
     }
@@ -334,11 +350,11 @@ function simulateGrade() {
 
     // ************* ส่วนสำหรับการบันทึกยอดรวมวัตถุดิบทั้งหมด *************
     const currentZenyCost = parseInt(selectedMaterialRadio.dataset.zeny);
-    const currentMaterialNameForGrade = selectedMaterialRadio.dataset.materialName; // e.g., "Etel Aquamarine 1ea"
+    const currentMaterialNameForGrade = selectedMaterialRadio.dataset.materialName; 
     const currentBlessedEtelDustUsed = dustUsed;
     const keepsItemOnFail = selectedMaterialRadio.dataset.keepsItemOnFail === 'true';
 
-    totalZeny += currentZenyCost; // Zeny โดยตรงจากการ Grade
+    totalZeny += currentZenyCost; 
 
     // แยกชื่อวัตถุดิบหลักออก (เช่น "Etel Aquamarine 1ea" -> "Etel Aquamarine")
     const primaryMaterialMatch = currentMaterialNameForGrade.match(/(\w+\s\w+)/);
@@ -389,6 +405,8 @@ function simulateGrade() {
 currentGradeSelect.addEventListener("change", displayGradeInfo);
 // เพิ่ม Event Listener เมื่อมีการเปลี่ยนแปลงค่าในช่อง Blessed Etel Dust
 blessedEtelDustInput.addEventListener("input", updateSuccessRate);
+// เพิ่ม Event Listener สำหรับ Checkbox Event Rate
+eventRateCheckbox.addEventListener("change", updateSuccessRate); // เมื่อ Checkbox ถูกเปลี่ยน ให้เรียก updateSuccessRate
 
 // เรียกใช้ครั้งแรกเมื่อโหลดหน้าเว็บและอัปเดต UI ยอดรวมเริ่มต้น
 displayGradeInfo();

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
             background-color: #f4f4f4;
             color: #333;
         }
+
         .container {
             background-color: #fff;
             padding: 20px;
@@ -19,16 +21,22 @@
             max-width: 600px;
             margin: auto;
         }
-        h1, h2 {
+
+        h1,
+        h2 {
             color: #0056b3;
             text-align: center;
         }
+
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
         }
-        select, input[type="number"], button {
+
+        select,
+        input[type="number"],
+        button {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -36,6 +44,7 @@
             border-radius: 4px;
             font-size: 16px;
         }
+
         button {
             background-color: #28a745;
             color: white;
@@ -43,9 +52,11 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+
         button:hover {
             background-color: #218838;
         }
+
         .result {
             margin-top: 20px;
             padding: 15px;
@@ -54,37 +65,45 @@
             font-size: 1.2em;
             font-weight: bold;
         }
+
         .success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .failure {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .info-box {
             background-color: #e9ecef;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
         }
+
         .info-box p {
             margin: 5px 0;
         }
+
         .material-options {
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
         }
+
         .material-option {
             margin-bottom: 8px;
         }
+
         .material-option input[type="radio"] {
             width: auto;
             margin-right: 10px;
         }
+
         .summary-box {
             background-color: #ffeeba;
             border: 1px solid #ffc107;
@@ -92,19 +111,23 @@
             border-radius: 8px;
             margin-top: 30px;
         }
+
         .summary-box h2 {
             color: #856404;
             text-align: left;
         }
+
         .summary-box ul {
             list-style-type: none;
             padding: 0;
         }
+
         .summary-box li {
             margin-bottom: 5px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>ระบบจำลองการ Grade ไอเท็ม Ro</h1>
@@ -121,18 +144,22 @@
             <h2>ข้อมูลการ Grade:</h2>
             <p><strong>Refine:</strong> +11</p>
             <div id="materialOptions" class="material-options">
-                </div>
+            </div>
             <p><strong>Zeny:</strong> <span id="zenyCost">N/A</span></p>
             <p><strong>โอกาสสำเร็จ:</strong> <span id="successRate">N/A</span>%</p>
-            </div>
+        </div>
 
         <label for="blessedEtelDust">จำนวน Blessed Etel Dust ที่ใช้:</label>
         <input type="number" id="blessedEtelDust" value="0" min="0" max="100">
-
+        <div class="material-option" style="margin-bottom: 15px;">
+            <input type="checkbox" id="eventRateCheckbox">
+            <label for="eventRateCheckbox" style="display: inline-block; font-weight: normal;">กดตรงนี้เพื่อใช้เรท Event
+                (+10%)</label>
+        </div>
         <button onclick="simulateGrade()">Grade ไอเท็ม</button>
 
         <div id="result" class="result">
-            </div>
+        </div>
 
         <div class="summary-box">
             <h2>สรุปยอดรวมที่ใช้ไป:</h2>
@@ -140,7 +167,7 @@
             <p><strong>Blessed Etel Dust ทั้งหมด:</strong> <span id="totalBlessedEtelDustSpent">0</span>ea</p>
             <h3>วัตถุดิบ Grade ทั้งหมด:</h3>
             <ul id="totalMaterialsSpent">
-                </ul>
+            </ul>
             <button onclick="resetSpentData()" style="background-color: #dc3545;">รีเซ็ตข้อมูลที่ใช้ไป</button>
         </div>
     </div>
@@ -150,4 +177,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

@@ -1,181 +1,160 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจำลองการ Grade ไอเท็ม Ro</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
+<meta charset="UTF-8">
+<title>RO Grade Simulator</title>
 
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: auto;
-        }
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    color: #eee;
+}
 
-        h1,
-        h2 {
-            color: #0056b3;
-            text-align: center;
-        }
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: #2f2f46;
+    padding: 20px;
+    border-radius: 12px;
+}
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
+/* INPUT */
+select, input[type="number"] {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    background: #1f1f2e;
+    color: #fff;
+    margin-top: 5px;
+}
 
-        select,
-        input[type="number"],
-        button {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
+/* 🔥 FIX checkbox */
+input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    transform: scale(0.9);
+}
 
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
+/* MATERIAL */
+.material-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    background: #1f1f2e;
+    border-radius: 6px;
+    font-size: 13px;
+}
 
-        button:hover {
-            background-color: #218838;
-        }
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    margin-top: 10px;
+    font-weight: bold;
+}
 
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
+.grade { background: #00c853; }
+.reset { background: #d50000; }
 
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
+/* RESULT */
+.result {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+}
+.success { background: #1b5e20; }
+.fail { background: #b71c1c; }
 
-        .failure {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+/* 🔥 DUST FIX */
+.dust-row {
+    display: flex;
+    align-items: flex-end;  /* 🔥 ทำให้ตรงกัน */
+    gap: 10px;
+    margin-top: 15px;
+}
 
-        .info-box {
-            background-color: #e9ecef;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
+.dust-input {
+    flex: 1;
+}
 
-        .info-box p {
-            margin: 5px 0;
-        }
+/* 🔥 FIX BOX HEIGHT */
+.event-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
-        .material-options {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
+    height: 34px; /* 🔥 เท่ากับ input */
+    padding: 0 10px;
 
-        .material-option {
-            margin-bottom: 8px;
-        }
+    background: #1f1f2e;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
 
-        .material-option input[type="radio"] {
-            width: auto;
-            margin-right: 10px;
-        }
-
-        .summary-box {
-            background-color: #ffeeba;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 30px;
-        }
-
-        .summary-box h2 {
-            color: #856404;
-            text-align: left;
-        }
-
-        .summary-box ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .summary-box li {
-            margin-bottom: 5px;
-        }
-    </style>
+/* SUMMARY */
+.summary {
+    margin-top: 20px;
+    border-top: 1px solid #444;
+    padding-top: 10px;
+}
+</style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>ระบบจำลองการ Grade ไอเท็ม Ro</h1>
 
-        <label for="currentGrade">เลือก Grade ปัจจุบันของไอเท็ม:</label>
-        <select id="currentGrade">
-            <option value="No Grade">No Grade</option>
-            <option value="Grade D">Grade D</option>
-            <option value="Grade C">Grade C</option>
-            <option value="Grade B">Grade B</option>
-        </select>
+<div class="container">
 
-        <div id="gradeInfo" class="info-box">
-            <h2>ข้อมูลการ Grade:</h2>
-            <p><strong>Refine:</strong> +11</p>
-            <div id="materialOptions" class="material-options">
-            </div>
-            <p><strong>Zeny:</strong> <span id="zenyCost">N/A</span></p>
-            <p><strong>โอกาสสำเร็จ:</strong> <span id="successRate">N/A</span>%</p>
-        </div>
+<h2>RO Grade Simulator</h2>
 
-        <label for="blessedEtelDust">จำนวน Blessed Etel Dust ที่ใช้:</label>
-        <input type="number" id="blessedEtelDust" value="0" min="0" max="100">
-        <div class="material-option" style="margin-bottom: 15px;">
-            <input type="checkbox" id="eventRateCheckbox">
-            <label for="eventRateCheckbox" style="display: inline-block; font-weight: normal;">กดตรงนี้เพื่อใช้เรท Event
-                (+10%)</label>
-        </div>
-        <button onclick="simulateGrade()">Grade ไอเท็ม</button>
+<label>Grade</label>
+<select id="currentGrade"></select>
 
-        <div id="result" class="result">
-        </div>
+<label>Refine</label>
+<select id="refineLevel"></select>
 
-        <div class="summary-box">
-            <h2>สรุปยอดรวมที่ใช้ไป:</h2>
-            <p><strong>Zeny ทั้งหมด:</strong> <span id="totalZenySpent">0</span></p>
-            <p><strong>Blessed Etel Dust ทั้งหมด:</strong> <span id="totalBlessedEtelDustSpent">0</span></p>
-            <h3>วัตถุดิบ Grade ทั้งหมด:</h3>
-            <ul id="totalMaterialsSpent">
-            </ul>
-            <button onclick="resetSpentData()" style="background-color: #dc3545;">รีเซ็ตข้อมูลที่ใช้ไป</button>
-        </div>
+<div id="materialOptions"></div>
+
+<p>Zeny: <span id="zenyCost">0</span></p>
+<p>Success Rate: <span id="successRate">0</span>%</p>
+
+<div class="dust-row">
+    <div class="dust-input">
+        <label>Blessed Dust</label>
+        <input type="number" id="dust" value="0">
     </div>
 
-    <audio id="successSound" src="success.mp3" preload="auto"></audio>
-    <audio id="failSound" src="fail.mp3" preload="auto"></audio>
+    <label class="event-box">
+        <input type="checkbox" id="event">
+        +10%
+    </label>
+</div>
 
-    <script src="script.js"></script>
+<button class="grade" onclick="simulate()">GRADE</button>
+
+<div class="result" id="result"></div>
+
+<div class="summary">
+    <h3>📦 สรุปวัตถุดิบ</h3>
+    <p>Zeny รวม: <span id="totalZeny">0</span></p>
+    <p>Blessed Dust: <span id="totalDust">0</span></p>
+    <ul id="totalMaterials"></ul>
+
+    <button class="reset" onclick="resetAll()">รีเซ็ต</button>
+</div>
+
+</div>
+
+<script src="script.js"></script>
 </body>
-
 </html>
